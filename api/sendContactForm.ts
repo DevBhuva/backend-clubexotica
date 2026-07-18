@@ -91,9 +91,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('[sendContactForm]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[sendContactForm]', msg);
     return res.status(500).json({
-      error: 'Failed to send email. Please try again later.',
+      error: `Email delivery failed: ${msg}`,
     });
   }
 }
