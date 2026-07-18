@@ -1,40 +1,34 @@
 /**
  * _mailer.ts — shared Nodemailer transporter + email template helpers.
- * Leading underscore tells Vercel NOT to expose this as an API route.
+ * Uses Gmail SMTP with an App Password — works reliably from Vercel.
+ *
+ * Required environment variables (set in Vercel dashboard):
+ *   GMAIL_USER  — the Gmail address (e.g. clubexotica12@gmail.com)
+ *   GMAIL_PASS  — the 16-char Google App Password (spaces are stripped automatically)
  */
 
 import * as nodemailer from 'nodemailer';
 
 // ─── Transporter ──────────────────────────────────────────────────────────────
-// Credentials come from Vercel Environment Variables (set in dashboard).
 export function createTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? '465', 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = process.env.GMAIL_USER;
+  const pass = (process.env.GMAIL_PASS ?? '').replace(/\s+/g, ''); // strip spaces
 
-  if (!host || !user || !pass) {
+  if (!user || !pass) {
     throw new Error(
-      `Missing SMTP env vars — host=${host ?? 'MISSING'} user=${user ?? 'MISSING'} pass=${pass ? 'SET' : 'MISSING'}`
+      `Missing env vars — GMAIL_USER=${user ?? 'MISSING'} GMAIL_PASS=${pass ? 'SET' : 'MISSING'}`
     );
   }
 
   return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,   // true for SSL (465), false for TLS (587)
+    service: 'gmail',
     auth: { user, pass },
-    tls: { rejectUnauthorized: false }, // allow self-signed certs on shared hosting
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
   });
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-export const TO_EMAIL   = 'Md@clubexotica.in';
-// FROM must match the SMTP_USER address — Hostinger rejects mismatched senders
-export const FROM_LABEL = `Club Exotica <${process.env.SMTP_USER ?? 'md@clubexotica.in'}>`;
+export const TO_EMAIL   = 'md@clubexotica.in';
+export const FROM_LABEL = `Club Exotica <${process.env.GMAIL_USER ?? 'clubexotica12@gmail.com'}>`;
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
 export function row(label: string, value: string): string {
