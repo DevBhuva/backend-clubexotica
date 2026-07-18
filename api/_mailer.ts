@@ -9,12 +9,14 @@ import * as nodemailer from 'nodemailer';
 // Credentials come from Vercel Environment Variables (set in dashboard).
 export function createTransporter() {
   const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? '587', 10);
+  const port = parseInt(process.env.SMTP_PORT ?? '465', 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
-    throw new Error('Missing SMTP environment variables: SMTP_HOST, SMTP_USER, SMTP_PASS');
+    throw new Error(
+      `Missing SMTP env vars — host=${host ?? 'MISSING'} user=${user ?? 'MISSING'} pass=${pass ? 'SET' : 'MISSING'}`
+    );
   }
 
   return nodemailer.createTransport({
@@ -22,13 +24,17 @@ export function createTransporter() {
     port,
     secure: port === 465,   // true for SSL (465), false for TLS (587)
     auth: { user, pass },
+    tls: { rejectUnauthorized: false }, // allow self-signed certs on shared hosting
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 export const TO_EMAIL   = 'Md@clubexotica.in';
 // FROM must match the SMTP_USER address — Hostinger rejects mismatched senders
-export const FROM_LABEL = `Club Exotica <${process.env.SMTP_USER ?? 'customersupport@clubexotica.in'}>`;
+export const FROM_LABEL = `Club Exotica <${process.env.SMTP_USER ?? 'md@clubexotica.in'}>`;
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
 export function row(label: string, value: string): string {
